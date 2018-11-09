@@ -539,3 +539,372 @@ if(!message.guild.member(client.user).hasPermission("MANAGE_ROLES")) return mess
 
 
 
+
+//حالة الاعضاء
+
+client.on('message', message => {
+    if(message.content == '$member') { // البريفكس و الامر
+    const embed = new Discord.RichEmbed()
+    .setDescription(`**Member Info | حالة الاعضاء**”‹
+:green_heart: online:   ${message.guild.members.filter(m=>m.presence.status == 'online').size}
+:heart:dnd:       ${message.guild.members.filter(m=>m.presence.status == 'dnd').size}
+:yellow_heart: idle:      ${message.guild.members.filter(m=>m.presence.status == 'idle').size}   
+:black_heart: offline:   ${message.guild.members.filter(m=>m.presence.status == 'offline').size} 
+:blue_heart:   all:  ${message.guild.memberCount}**`)         
+         message.channel.send({embed});
+
+    }
+  });
+
+
+
+
+
+
+//اعطاء رول
+
+client.on("message", async message => {
+      if (message.content.startsWith("!addrole")) {
+      if(!message.author.bot) return ;
+      if(!message.channel.guild) return ;
+      if(!message.member.hasPermission("MANAGE_ROLES")) return message.reply("أنت بحاجة إلى إذن `MANAGE_ROLES`");
+      if(!message.guild.member(client.user).hasPermission("MANAGE_ROLES")) return message.channel.send('بوت** ليس لديه إذن** `MANAGE_ROLES`');
+      var args = message.content.split(' ').slice(1); 
+      let rMember = message.guild.member(message.mentions.users.first()) || message.guild.members.get(args[0]);
+      if(!args[0]) return message.reply(" `!addrole` [User] [role]");
+      if(!rMember) return message.reply("لا يمكن العثور على هذا المستخدم");
+      let role = args.join(" ").slice(22);
+      if(!role) return message.reply("حدد دورًا!");
+      let gRole = message.guild.roles.find(`name`, role);
+      if(!gRole) return message.reply("لا أستطيع أن أجد هذا الدور");
+      if(rMember.roles.has(gRole.id)) return message.reply(`لديه بالفعل هذا الدور`);
+      await(rMember.addRole(gRole.id));
+      try{
+        await message.channel.send(`<@${rMember.id}> تم اضافة الدور الى **${gRole.name}**`)
+      }catch(e){
+      }
+    }
+    });
+
+
+
+
+
+//مانع التهكير
+
+var fs = require('fs')
+ const data = JSON.parse(fs.readFileSync('./data.json', 'utf8'));
+  let banse = new Set();
+  client.on('guildBanAdd', function(guild) {
+    guild.fetchAuditLogs().then(logs => {
+      const ser = logs.entries.first().executor;
+      if(!bane[ser.id+guild.id]) bane[ser.id+guild.id] = {
+        bans: 2
+      }
+      let boner = bane[ser.id+guild.id]
+  banse.add(ser.id)
+  boner.bans = Math.floor(boner.bans+1)
+  
+  
+  setTimeout(() => {
+    boner.bans = 2
+    banse.delete(ser.id)
+  },8000)
+  
+  if(boner.bans > 2) {
+    let roles = guild.members.get(ser.id).roles.array()
+  guild.members.get(ser.id).removeRoles(roles)
+  }
+  
+      })
+      fs.writeFile('./alpha.json', JSON.stringify(bane), (err) => {
+  if (err) console.error(err);
+  })
+  
+  })
+  client.on('guildMemberRemove', (u) => {
+      u.guild.fetchAuditLogs().then( s => {
+          var ss = s.entries.first();
+          if (ss.action == `MEMBER_KICK`) {
+          if (!data[ss.executor.id]) {
+              data[ss.executor.id] = {
+              time : 1
+            };
+        } else {  
+            data[ss.executor.id].time+=1
+        };
+  data[ss.executor.id].time = 0
+  u.guild.members.get(ss.executor.id).roles.forEach(r => {
+                  r.edit({
+                      permissions : []
+                  });
+                  data[ss.executor.id].time = 0
+              });
+          setTimeout(function(){
+              if (data[ss.executor.id].time <= 3) {
+                  data[ss.executor.id].time = 0
+              }
+          })
+      };
+      });
+      fs.writeFile("./data.json", JSON.stringify(data) ,(err) =>{
+          if (err) console.log(err.message);
+      });
+  });
+  client.on('roleDelete', (u) => {
+      u.guild.fetchAuditLogs().then( s => {
+          var ss = s.entries.first();
+          if (ss.action == `ROLE_DELETE`) {
+          if (!data[ss.executor.id]) {
+              data[ss.executor.id] = {
+              time : 1
+            };
+        } else {
+            data[ss.executor.id].time+=1
+        };
+  data[ss.executor.id].time = 0
+  u.guild.members.get(ss.executor.id).roles.forEach(r => {
+                  r.edit({
+                      permissions : []
+                  });
+                  data[ss.executor.id].time = 0
+              });
+          setTimeout(function(){
+              if (data[ss.executor.id].time <= 3) {
+                  data[ss.executor.id].time = 0
+              }
+          },60000)
+      };
+      });
+      fs.writeFile("./data.json", JSON.stringify(data) ,(err) =>{
+          if (err) console.log(err.message);
+      }); 
+  });
+  client.on('channelDelete', (u) => {
+      u.guild.fetchAuditLogs().then( s => {
+          var ss = s.entries.first();
+          if (ss.action == `CHANNEL_DELETE`) {
+          if (!data[ss.executor.id]) {
+              data[ss.executor.id] = {
+              time : 1
+            };
+        } else {
+            data[ss.executor.id].time+=1
+        };
+  data[ss.executor.id].time = 0
+  u.guild.members.get(ss.executor.id).roles.forEach(r => {
+                  r.edit({
+                      permissions : []
+                  });
+                  data[ss.executor.id].time = 0
+              });
+          setTimeout(function(){
+              if (data[ss.executor.id].time <= 3) {
+                  data[ss.executor.id].time = 0
+              }
+          })
+      };
+      });
+      fs.writeFile("./data.json", JSON.stringify(data) ,(err) =>{
+          if (err) console.log(err.message);
+      });
+  })
+
+
+
+
+
+//عدد المتبندين
+
+client.on('message', message => {
+    if (message.content.startsWith("+bans")) {
+        message.guild.fetchBans()
+        .then(bans => message.channel.send(`${bans.size} عدد اشخاص المبندة من السيرفر `))
+  .catch(console.error);
+}
+});
+
+
+
+
+
+//الهيلب
+
+client.on('message', message => {
+    if (message.author.bot) return;
+     if (message.content === prefix + "help") {
+		 message.channel.send('**تم الأرسال في الخاص**');
+            
+
+
+
+
+ message.author.sendMessage(`
+ **
+__~~Speed Bot~~__ By: iBeAnthonyD_
+╔[❖════════════❖]╗
+             Prefix = ' $ '
+╚[❖════════════❖]╝
+╔[❖════════════❖]╗
+             Admin Commands
+╚[❖════════════❖]╝
+ ❖ $kick <mention > ➾ لطرد شخص
+ ❖ $mute < mention > ➾ لأعطاء شخص ميوت
+ ❖ $unmute <mention> ➾ لفك الميوت عن شخص
+ ❖ $ct <name> ➾ لأنشاء روم كتابي
+ ❖ $cv <name> لأنشاء روم صوتي
+ ❖ $bc <message> ➾ لأرسال رسالة لجميع الأعضاء على الخاص
+ ❖ $warn <mention> <reason> ➾ لأعطاء انذار او تحذير لشخص
+ ❖ $rbc <mentionrole><message> ➾ لأرسال رسالة لجميع الأعضاء الي معهم الرتبة على الخاص
+╔[❖════════════❖]╗
+            General  Commands
+╚[❖════════════❖]╝
+❖ $member ➾ لمعرفة الأعضاء الموجودة في السيرفر
+❖ $mcskin <name > ➾  لعرض سكنك في ماين كرافت
+❖ $uptime ➾ لمعرفة البوت كم صار له اونلاين
+�� $topinv ➾ لروئية اكثر الأشخاص الي ينشرون السيرفر
+❖ $own ➾  (soon) لمعرفة من الأونر مالت البوت
+❖ $id ➾ لروئية الأيدي التك
+❖ $avatar ➾ لروئية صورة حسابك
+❖ $ping ➾ لروئية بينق البوت
+❖ $bot ➾ معلومات عن البوت
+❖ $server ➾ معلومات السيرفر 
+❖ $inv ➾ لدعوة البوت الى سيرفرك
+╔[❖════════════❖]╗
+                    Welcome
+╚[❖════════════❖]╝
+==================================================================
+Server Support : https://discord.gg/guZUUJ4
+==================================================================
+Bot Website : https://speedbot.site123.me/
+==================================================================
+`);
+
+    }
+});
+
+
+
+
+
+//كود معلومات السيرفر
+
+client.on('message', function(msg) {
+
+    if(msg.content.startsWith (prefix + 'server')) {
+
+      let embed = new Discord.RichEmbed()
+
+      .setColor('RANDOM')
+
+      .setThumbnail(msg.guild.iconURL)
+
+      .setTitle(`Showing Details Of **${msg.guild.name}*`)
+
+      .addField('🌐** نوع السيرفر**',`[** __${msg.guild.region}__ **]`,true)
+
+      .addField('🏅** __الرتب__**',`[** __${msg.guild.roles.size}__ **]`,true)
+
+      .addField('🔴**__ عدد الاعضاء__**',`[** __${msg.guild.memberCount}__ **]`,true)
+
+      .addField('🔵**__ عدد الاعضاء الاونلاين__**',`[** __${msg.guild.members.filter(m=>m.presence.status == 'online').size}__ **]`,true)
+
+      .addField('📝**__ الرومات الكتابية__**',`[** __${msg.guild.channels.filter(m => m.type === 'text').size}__** ]`,true)
+
+      .addField('🎤**__ رومات الصوت__**',`[** __${msg.guild.channels.filter(m => m.type === 'voice').size}__ **]`,true)
+
+      .addField('👑**__ الأونـر__**',`**${msg.guild.owner}**`,true)
+
+      .addField('🆔**__ ايدي السيرفر__**',`**${msg.guild.id}**`,true)
+
+      .addField('📅**__ تم عمل السيرفر في__**',msg.guild.createdAt.toLocaleString())
+
+      msg.channel.send({embed:embed});
+
+    }
+
+  });
+
+
+
+
+
+//كود لوق الميوت و الغاءه و الديفن و الغاءه
+
+client.on('voiceStateUpdate', (oldM, newM) => {
+  let example1 = oldM.serverMute;
+  let example2 = newM.serverMute;
+  let exam1 = oldM.serverDeaf;
+  let exam2 = newM.serverDeaf;
+  let channel = oldM.guild.channels.find('name', 'log')
+  if(!channel) return;
+    oldM.guild.fetchAuditLogs()
+    .then(logs => {
+      let user = logs.entries.first().executor.username
+    if(example1 === false && example2 === true) {
+       let embed = new Discord.RichEmbed()
+       .setAuthor(`${newM.user.tag}`, newM.user.avatarURL)
+       .setDescription(`${newM} تم إعطآئه ميوت صوتي`)
+       .setFooter(`بواسطه : ${user}`)
+        .setColor('#36393e')
+       channel.send(embed)
+    }
+    if(example1 === true && example2 === false) {
+       let embed = new Discord.RichEmbed()
+       .setAuthor(`${newM.user.tag}`, newM.user.avatarURL)
+       .setDescription(`${newM} تم فك الميوت الصوتي `)
+       .setFooter(`بواسطه : ${user}`)
+        .setColor('#36393e')
+       .setTimestamp()
+       channel.send(embed)
+    }
+    if(exam1 === false && exam2 === true) {
+       let embed = new Discord.RichEmbed()
+       .setAuthor(`${newM.user.tag}`, newM.user.avatarURL)
+       .setDescription(`${newM} تم إعطآئه ديفن أو سمآعهه`)
+       .setFooter(`بوآسطه : ${user}`)
+        .setColor('#36393e')
+       .setTimestamp()
+       channel.send(embed)
+    }
+    if(exam1 === true && exam2 === false) {
+       let embed = new Discord.RichEmbed()
+       .setAuthor(`${newM.user.tag}`, newM.user.avatarURL)
+       .setDescription(`${newM} تم فك عنهه الديفن أو السمآعهه`)
+       .setFooter(`بوآسطه : ${user}`)
+        .setColor('#36393e')
+       .setTimestamp()
+       channel.send(embed)
+    }
+  })
+});
+
+
+
+
+
+//الافاتار
+
+client.on('message', message =>{
+    let args = message.content.split(' ');
+    let prefix = '$'; 
+    
+    if(args[0] === `${prefix}avatar`){
+        let mentions = message.mentions.members.first()
+        if(!mentions) {
+          let sicon = message.author.avatarURL
+          let embed = new Discord.RichEmbed()
+          .setImage(message.author.avatarURL)
+          .setColor("#f7abab") 
+          .setDescription(`**${message.author.username}#${message.author.discriminator}**'s avatar :`);
+          message.channel.send({embed})
+        } else {
+          let sicon = mentions.user.avatarURL
+          let embed = new Discord.RichEmbed()
+          .setColor("#f7abab")
+          .setDescription(`**${mentions.user.username}#${mentions.user.discriminator}**'s avatar :`)
+          .setImage(sicon)
+          message.channel.send({embed})
+        }
+    };
+});
